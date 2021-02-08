@@ -6,6 +6,7 @@ import uploadConfig from '@config/uploads';
 import Users from '@modules/users/infra/typeorm/entities/Users';
 import AppError from '@shared/errors/AppError';
 import IUsersRepository from '../repositories/IUsersRepository';
+import IStorageProvider from '@shared/container/providers/StorageProvider/models/IStorageProvider';
 
 interface Request{
     user_id: string;
@@ -16,7 +17,10 @@ interface Request{
 class UpdateUserAvatarService{
     constructor(
         @inject('UsersRepository')
-        private userRepository: IUsersRepository
+        private userRepository: IUsersRepository,
+
+        @inject('StorageProvider')
+        private storageProvider: IStorageProvider
     ){}
 
     public async execute({user_id, avatarFilename}: Request): Promise<Users> {
@@ -27,15 +31,13 @@ class UpdateUserAvatarService{
         }
 
         if(user.avatar){
-            const userAvatarFilePath = path.join(uploadConfig.directory, user.avatar);
-            const userAvatarFileExists = fs.promises.stat(userAvatarFilePath);
-
-            if(userAvatarFileExists){
-                await fs.promises.unlink(userAvatarFilePath);
-            }
+            await this.storageProvider.deleteFile(user.avatar);
         }
 
-        user.avatar = avatarFilename;
+        const fileName = await this.storageProvider.saveFile(avatarFilename);
+
+        user.avatar = fileName;
+
         await this.userRepository.save(user);
 
         return user;
