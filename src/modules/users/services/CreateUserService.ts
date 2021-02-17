@@ -6,7 +6,7 @@ import Users from '@modules/users/infra/typeorm/entities/Users';
 import IUsersRepository from '../repositories/IUsersRepository';
 import IHashProvider from '../providers/HashProvider/models/IHashProvider';
 
-interface Request{
+interface IRequest{
     name: string;
     email: string;
     password: string;
@@ -22,7 +22,7 @@ class CreateUserService{
         private hashProvider: IHashProvider,
     ){}
 
-    public async execute({name, email, password}:Request): Promise<Users>{
+    public async execute({name, email, password}:IRequest): Promise<Users>{
 
 
         const userEmailExist = await this.usersRepository.findByEmail(email);
